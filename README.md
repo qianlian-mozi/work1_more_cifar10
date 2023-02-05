@@ -1,1 +1,5 @@
 # work1_more_cifar10
+使用svt进行的cifar10训练，其实opendatalab那边的数据集不能直接扔进来，训练结点又不能联网（mmcls自带搜索下载cifar10不可使用），要自己去下载。
+20epoch达到了92的精度，能继续上升但是到了后期lr过小了以至于点上升得太慢，先提交了吧。
+config文件有full和simply版本，后者是_base_书写的；
+模型文件还在上传，wp路径会存放于.txt文件中
