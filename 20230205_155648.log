@@ -1,0 +1,329 @@
+2023-02-05 15:56:48,788 - mmcls - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: linux
+Python: 3.8.16 (default, Jan 17 2023, 23:13:24) [GCC 11.2.0]
+CUDA available: True
+GPU 0: NVIDIA GeForce RTX 3090
+CUDA_HOME: /data/apps/cuda/11.3
+NVCC: Cuda compilation tools, release 11.3, V11.3.58
+GCC: gcc (GCC) 7.3.0
+PyTorch: 1.13.1
+PyTorch compiling details: PyTorch built with:
+  - GCC 9.3
+  - C++ Version: 201402
+  - Intel(R) oneAPI Math Kernel Library Version 2021.4-Product Build 20210904 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.6.0 (Git Hash 52b5f107dd9cf10910aaa19cb47f3abf9b349815)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 11.6
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86;-gencode;arch=compute_37,code=compute_37
+  - CuDNN 8.3.2  (built against CUDA 11.5)
+  - Magma 2.6.1
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.6, CUDNN_VERSION=8.3.2, CXX_COMPILER=/opt/rh/devtoolset-9/root/usr/bin/c++, CXX_FLAGS= -fabi-version=11 -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Werror=non-virtual-dtor -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wunused-local-typedefs -Wno-unused-parameter -Wno-unused-function -Wno-unused-result -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Werror=cast-function-type -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.13.1, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, 
+
+TorchVision: 0.14.1
+OpenCV: 4.7.0
+MMCV: 1.7.1
+MMCV Compiler: GCC 9.3
+MMCV CUDA Compiler: 11.6
+MMClassification: 0.25.0+3d4f80d
+------------------------------------------------------------
+
+2023-02-05 15:56:48,789 - mmcls - INFO - Distributed training: False
+2023-02-05 15:56:48,904 - mmcls - INFO - Config:
+model = dict(
+    type='ImageClassifier',
+    backbone=dict(
+        type='SVT',
+        arch='base',
+        in_channels=3,
+        out_indices=(3, ),
+        qkv_bias=True,
+        norm_cfg=dict(type='LN'),
+        norm_after_stage=[False, False, False, True],
+        drop_rate=0.0,
+        attn_drop_rate=0.0,
+        drop_path_rate=0.3),
+    neck=dict(type='GlobalAveragePooling'),
+    head=dict(
+        type='LinearClsHead',
+        num_classes=10,
+        in_channels=768,
+        loss=dict(
+            type='LabelSmoothLoss', label_smooth_val=0.1, mode='original'),
+        cal_acc=False,
+        topk=(1, )),
+    init_cfg=[
+        dict(type='TruncNormal', layer='Linear', std=0.02, bias=0.0),
+        dict(type='Constant', layer='LayerNorm', val=1.0, bias=0.0)
+    ],
+    train_cfg=dict(augments=[
+        dict(type='BatchMixup', alpha=0.8, num_classes=10, prob=0.5),
+        dict(type='BatchCutMix', alpha=1.0, num_classes=10, prob=0.5)
+    ]))
+dataset_type = 'CIFAR10'
+img_norm_cfg = dict(
+    mean=[125.307, 122.961, 113.8575],
+    std=[51.5865, 50.847, 51.255],
+    to_rgb=False)
+train_pipeline = [
+    dict(type='RandomCrop', size=32, padding=4),
+    dict(type='RandomFlip', flip_prob=0.5, direction='horizontal'),
+    dict(
+        type='Normalize',
+        mean=[125.307, 122.961, 113.8575],
+        std=[51.5865, 50.847, 51.255],
+        to_rgb=False),
+    dict(type='ImageToTensor', keys=['img']),
+    dict(type='ToTensor', keys=['gt_label']),
+    dict(type='Collect', keys=['img', 'gt_label'])
+]
+test_pipeline = [
+    dict(
+        type='Normalize',
+        mean=[125.307, 122.961, 113.8575],
+        std=[51.5865, 50.847, 51.255],
+        to_rgb=False),
+    dict(type='ImageToTensor', keys=['img']),
+    dict(type='Collect', keys=['img'])
+]
+data = dict(
+    samples_per_gpu=128,
+    workers_per_gpu=4,
+    train=dict(
+        type='CIFAR10',
+        data_prefix='data/cifar10',
+        pipeline=[
+            dict(type='RandomCrop', size=32, padding=4),
+            dict(type='RandomFlip', flip_prob=0.5, direction='horizontal'),
+            dict(
+                type='Normalize',
+                mean=[125.307, 122.961, 113.8575],
+                std=[51.5865, 50.847, 51.255],
+                to_rgb=False),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='ToTensor', keys=['gt_label']),
+            dict(type='Collect', keys=['img', 'gt_label'])
+        ]),
+    val=dict(
+        type='CIFAR10',
+        data_prefix='data/cifar10',
+        pipeline=[
+            dict(
+                type='Normalize',
+                mean=[125.307, 122.961, 113.8575],
+                std=[51.5865, 50.847, 51.255],
+                to_rgb=False),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img'])
+        ],
+        test_mode=True),
+    test=dict(
+        type='CIFAR10',
+        data_prefix='data/cifar10',
+        pipeline=[
+            dict(
+                type='Normalize',
+                mean=[125.307, 122.961, 113.8575],
+                std=[51.5865, 50.847, 51.255],
+                to_rgb=False),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img'])
+        ],
+        test_mode=True))
+optimizer = dict(
+    type='AdamW',
+    lr=0.000125,
+    weight_decay=0.05,
+    eps=1e-08,
+    betas=(0.9, 0.999),
+    paramwise_cfg=dict(_delete=True, norm_decay_mult=0.0, bias_decay_mult=0.0))
+optimizer_config = dict(grad_clip=dict(max_norm=5.0))
+runner = dict(type='EpochBasedRunner', max_epochs=20)
+checkpoint_config = dict(interval=1)
+log_config = dict(
+    interval=100,
+    hooks=[dict(type='TextLoggerHook'),
+           dict(type='TensorboardLoggerHook')])
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+load_from = 'pretrained/twins-svt-base_3rdparty_8xb128_in1k_20220126-e31cc8e9.pth'
+resume_from = None
+workflow = [('train', 1)]
+paramwise_cfg = dict(_delete=True, norm_decay_mult=0.0, bias_decay_mult=0.0)
+lr_config = dict(
+    policy='CosineAnnealing',
+    by_epoch=True,
+    min_lr_ratio=0.001,
+    warmup='linear',
+    warmup_ratio=0.0001,
+    warmup_iters=5,
+    warmup_by_epoch=True)
+evaluation = dict(interval=1, metric='accuracy')
+work_dir = 'work/work1_more_twins_1xb64_cifar10'
+gpu_ids = [0]
+
+2023-02-05 15:56:48,904 - mmcls - INFO - Set random seed to 1062116773, deterministic: False
+2023-02-05 15:56:52,993 - mmcls - INFO - load checkpoint from local path: pretrained/twins-svt-base_3rdparty_8xb128_in1k_20220126-e31cc8e9.pth
+2023-02-05 15:56:53,224 - mmcls - WARNING - The model and loaded state dict do not match exactly
+
+size mismatch for head.fc.weight: copying a param with shape torch.Size([1000, 768]) from checkpoint, the shape in current model is torch.Size([10, 768]).
+size mismatch for head.fc.bias: copying a param with shape torch.Size([1000]) from checkpoint, the shape in current model is torch.Size([10]).
+2023-02-05 15:56:53,227 - mmcls - INFO - Start running, host: scz0a6s@g0012, work_dir: /data/run01/scz0a6s/mmclassification/mmclassification/work/work1_more_twins_1xb64_cifar10
+2023-02-05 15:56:53,227 - mmcls - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_val_epoch:
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+2023-02-05 15:56:53,227 - mmcls - INFO - workflow: [('train', 1)], max: 20 epochs
+2023-02-05 15:56:53,227 - mmcls - INFO - Checkpoints will be saved to /data/run01/scz0a6s/mmclassification/mmclassification/work/work1_more_twins_1xb64_cifar10 by HardDiskBackend.
+2023-02-05 15:57:10,639 - mmcls - INFO - Epoch [1][100/391]	lr: 6.342e-06, eta: 0:22:08, time: 0.172, data_time: 0.024, memory: 1945, loss: 2.3166, grad_norm: 5.8386
+2023-02-05 15:57:21,521 - mmcls - INFO - Epoch [1][200/391]	lr: 1.274e-05, eta: 0:17:50, time: 0.109, data_time: 0.001, memory: 1945, loss: 2.2653, grad_norm: 4.3723
+2023-02-05 15:57:32,451 - mmcls - INFO - Epoch [1][300/391]	lr: 1.913e-05, eta: 0:16:18, time: 0.109, data_time: 0.001, memory: 1945, loss: 2.0394, grad_norm: 5.7907
+2023-02-05 15:57:42,407 - mmcls - INFO - Saving checkpoint at 1 epochs
+2023-02-05 15:57:45,425 - mmcls - INFO - Epoch(val) [1][79]	accuracy_top-1: 64.2700, accuracy_top-5: 96.8700
+2023-02-05 15:57:58,448 - mmcls - INFO - Epoch [2][100/391]	lr: 3.115e-05, eta: 0:12:56, time: 0.130, data_time: 0.021, memory: 1945, loss: 1.7198, grad_norm: 4.9945
+2023-02-05 15:58:09,421 - mmcls - INFO - Epoch [2][200/391]	lr: 3.750e-05, eta: 0:12:50, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.6804, grad_norm: 4.8084
+2023-02-05 15:58:20,392 - mmcls - INFO - Epoch [2][300/391]	lr: 4.385e-05, eta: 0:12:43, time: 0.110, data_time: 0.001, memory: 1945, loss: 1.6258, grad_norm: 4.6196
+2023-02-05 15:58:30,359 - mmcls - INFO - Saving checkpoint at 2 epochs
+2023-02-05 15:58:33,235 - mmcls - INFO - Epoch(val) [2][79]	accuracy_top-1: 79.7900, accuracy_top-5: 98.8600
+2023-02-05 15:58:46,271 - mmcls - INFO - Epoch [3][100/391]	lr: 5.496e-05, eta: 0:11:24, time: 0.130, data_time: 0.021, memory: 1945, loss: 1.5833, grad_norm: 4.4776
+2023-02-05 15:58:57,279 - mmcls - INFO - Epoch [3][200/391]	lr: 6.120e-05, eta: 0:11:22, time: 0.110, data_time: 0.001, memory: 1945, loss: 1.5664, grad_norm: 4.3813
+2023-02-05 15:59:08,290 - mmcls - INFO - Epoch [3][300/391]	lr: 6.743e-05, eta: 0:11:18, time: 0.110, data_time: 0.001, memory: 1945, loss: 1.5329, grad_norm: 4.3307
+2023-02-05 15:59:18,292 - mmcls - INFO - Saving checkpoint at 3 epochs
+2023-02-05 15:59:21,268 - mmcls - INFO - Epoch(val) [3][79]	accuracy_top-1: 84.1600, accuracy_top-5: 99.3500
+2023-02-05 15:59:34,321 - mmcls - INFO - Epoch [4][100/391]	lr: 7.691e-05, eta: 0:10:27, time: 0.130, data_time: 0.021, memory: 1945, loss: 1.4887, grad_norm: 4.1056
+2023-02-05 15:59:45,307 - mmcls - INFO - Epoch [4][200/391]	lr: 8.295e-05, eta: 0:10:24, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.5117, grad_norm: 3.9059
+2023-02-05 15:59:56,287 - mmcls - INFO - Epoch [4][300/391]	lr: 8.900e-05, eta: 0:10:20, time: 0.110, data_time: 0.001, memory: 1945, loss: 1.5397, grad_norm: 3.8600
+2023-02-05 16:00:06,265 - mmcls - INFO - Saving checkpoint at 4 epochs
+2023-02-05 16:00:09,108 - mmcls - INFO - Epoch(val) [4][79]	accuracy_top-1: 85.2900, accuracy_top-5: 99.5500
+2023-02-05 16:00:22,154 - mmcls - INFO - Epoch [5][100/391]	lr: 9.619e-05, eta: 0:09:41, time: 0.130, data_time: 0.021, memory: 1945, loss: 1.4593, grad_norm: 4.0887
+2023-02-05 16:00:33,141 - mmcls - INFO - Epoch [5][200/391]	lr: 1.020e-04, eta: 0:09:36, time: 0.110, data_time: 0.001, memory: 1945, loss: 1.4796, grad_norm: 3.7785
+2023-02-05 16:00:44,133 - mmcls - INFO - Epoch [5][300/391]	lr: 1.078e-04, eta: 0:09:32, time: 0.110, data_time: 0.001, memory: 1945, loss: 1.4241, grad_norm: 3.8125
+2023-02-05 16:00:54,136 - mmcls - INFO - Saving checkpoint at 5 epochs
+2023-02-05 16:00:57,181 - mmcls - INFO - Epoch(val) [5][79]	accuracy_top-1: 87.3600, accuracy_top-5: 99.5300
+2023-02-05 16:01:10,200 - mmcls - INFO - Epoch [6][100/391]	lr: 1.067e-04, eta: 0:08:58, time: 0.130, data_time: 0.021, memory: 1945, loss: 1.4648, grad_norm: 3.7048
+2023-02-05 16:01:21,150 - mmcls - INFO - Epoch [6][200/391]	lr: 1.067e-04, eta: 0:08:53, time: 0.109, data_time: 0.000, memory: 1945, loss: 1.4292, grad_norm: 3.6226
+2023-02-05 16:01:32,237 - mmcls - INFO - Epoch [6][300/391]	lr: 1.067e-04, eta: 0:08:48, time: 0.111, data_time: 0.001, memory: 1945, loss: 1.3987, grad_norm: 3.6421
+2023-02-05 16:01:42,197 - mmcls - INFO - Saving checkpoint at 6 epochs
+2023-02-05 16:01:45,236 - mmcls - INFO - Epoch(val) [6][79]	accuracy_top-1: 88.2500, accuracy_top-5: 99.5300
+2023-02-05 16:01:58,192 - mmcls - INFO - Epoch [7][100/391]	lr: 9.926e-05, eta: 0:08:18, time: 0.130, data_time: 0.021, memory: 1945, loss: 1.4282, grad_norm: 3.6871
+2023-02-05 16:02:08,995 - mmcls - INFO - Epoch [7][200/391]	lr: 9.926e-05, eta: 0:08:12, time: 0.108, data_time: 0.000, memory: 1945, loss: 1.4409, grad_norm: 3.5062
+2023-02-05 16:02:19,953 - mmcls - INFO - Epoch [7][300/391]	lr: 9.926e-05, eta: 0:08:06, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.3759, grad_norm: 3.5098
+2023-02-05 16:02:29,903 - mmcls - INFO - Saving checkpoint at 7 epochs
+2023-02-05 16:02:32,747 - mmcls - INFO - Epoch(val) [7][79]	accuracy_top-1: 89.2300, accuracy_top-5: 99.5800
+2023-02-05 16:02:45,794 - mmcls - INFO - Epoch [8][100/391]	lr: 9.091e-05, eta: 0:07:39, time: 0.130, data_time: 0.021, memory: 1945, loss: 1.3889, grad_norm: 3.3200
+2023-02-05 16:02:56,800 - mmcls - INFO - Epoch [8][200/391]	lr: 9.091e-05, eta: 0:07:33, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.4186, grad_norm: 3.4422
+2023-02-05 16:03:07,766 - mmcls - INFO - Epoch [8][300/391]	lr: 9.091e-05, eta: 0:07:27, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.4137, grad_norm: 3.5623
+2023-02-05 16:03:17,733 - mmcls - INFO - Saving checkpoint at 8 epochs
+2023-02-05 16:03:20,653 - mmcls - INFO - Epoch(val) [8][79]	accuracy_top-1: 89.5800, accuracy_top-5: 99.6900
+2023-02-05 16:03:33,716 - mmcls - INFO - Epoch [9][100/391]	lr: 8.186e-05, eta: 0:07:02, time: 0.131, data_time: 0.021, memory: 1945, loss: 1.3812, grad_norm: 3.5081
+2023-02-05 16:03:44,687 - mmcls - INFO - Epoch [9][200/391]	lr: 8.186e-05, eta: 0:06:55, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.3932, grad_norm: 3.3201
+2023-02-05 16:03:55,651 - mmcls - INFO - Epoch [9][300/391]	lr: 8.186e-05, eta: 0:06:48, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.3287, grad_norm: 3.4669
+2023-02-05 16:04:05,623 - mmcls - INFO - Saving checkpoint at 9 epochs
+2023-02-05 16:04:08,501 - mmcls - INFO - Epoch(val) [9][79]	accuracy_top-1: 89.9800, accuracy_top-5: 99.6600
+2023-02-05 16:04:21,533 - mmcls - INFO - Epoch [10][100/391]	lr: 7.233e-05, eta: 0:06:25, time: 0.130, data_time: 0.021, memory: 1945, loss: 1.3820, grad_norm: 3.3750
+2023-02-05 16:04:32,542 - mmcls - INFO - Epoch [10][200/391]	lr: 7.233e-05, eta: 0:06:18, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.3291, grad_norm: 3.4906
+2023-02-05 16:04:43,534 - mmcls - INFO - Epoch [10][300/391]	lr: 7.233e-05, eta: 0:06:10, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.3160, grad_norm: 3.5081
+2023-02-05 16:04:53,529 - mmcls - INFO - Saving checkpoint at 10 epochs
+2023-02-05 16:04:56,462 - mmcls - INFO - Epoch(val) [10][79]	accuracy_top-1: 89.8500, accuracy_top-5: 99.6500
+2023-02-05 16:05:09,530 - mmcls - INFO - Epoch [11][100/391]	lr: 6.256e-05, eta: 0:05:48, time: 0.131, data_time: 0.021, memory: 1945, loss: 1.3572, grad_norm: 3.4776
+2023-02-05 16:05:20,560 - mmcls - INFO - Epoch [11][200/391]	lr: 6.256e-05, eta: 0:05:41, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.2960, grad_norm: 3.4927
+2023-02-05 16:05:31,446 - mmcls - INFO - Epoch [11][300/391]	lr: 6.256e-05, eta: 0:05:33, time: 0.109, data_time: 0.000, memory: 1945, loss: 1.3580, grad_norm: 3.3883
+2023-02-05 16:05:41,401 - mmcls - INFO - Saving checkpoint at 11 epochs
+2023-02-05 16:05:44,421 - mmcls - INFO - Epoch(val) [11][79]	accuracy_top-1: 90.6800, accuracy_top-5: 99.7100
+2023-02-05 16:05:57,353 - mmcls - INFO - Epoch [12][100/391]	lr: 5.280e-05, eta: 0:05:12, time: 0.129, data_time: 0.021, memory: 1945, loss: 1.3641, grad_norm: 3.4937
+2023-02-05 16:06:08,306 - mmcls - INFO - Epoch [12][200/391]	lr: 5.280e-05, eta: 0:05:04, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.2990, grad_norm: 3.3968
+2023-02-05 16:06:19,229 - mmcls - INFO - Epoch [12][300/391]	lr: 5.280e-05, eta: 0:04:56, time: 0.109, data_time: 0.000, memory: 1945, loss: 1.3450, grad_norm: 3.4901
+2023-02-05 16:06:29,170 - mmcls - INFO - Saving checkpoint at 12 epochs
+2023-02-05 16:06:32,010 - mmcls - INFO - Epoch(val) [12][79]	accuracy_top-1: 91.1900, accuracy_top-5: 99.7600
+2023-02-05 16:06:45,050 - mmcls - INFO - Epoch [13][100/391]	lr: 4.327e-05, eta: 0:04:35, time: 0.130, data_time: 0.021, memory: 1945, loss: 1.3486, grad_norm: 3.3994
+2023-02-05 16:06:56,019 - mmcls - INFO - Epoch [13][200/391]	lr: 4.327e-05, eta: 0:04:27, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.3126, grad_norm: 3.4477
+2023-02-05 16:07:06,991 - mmcls - INFO - Epoch [13][300/391]	lr: 4.327e-05, eta: 0:04:19, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.3308, grad_norm: 3.3816
+2023-02-05 16:07:16,956 - mmcls - INFO - Saving checkpoint at 13 epochs
+2023-02-05 16:07:19,832 - mmcls - INFO - Epoch(val) [13][79]	accuracy_top-1: 91.0500, accuracy_top-5: 99.7500
+2023-02-05 16:07:32,717 - mmcls - INFO - Epoch [14][100/391]	lr: 3.422e-05, eta: 0:03:59, time: 0.129, data_time: 0.021, memory: 1945, loss: 1.2671, grad_norm: 3.4329
+2023-02-05 16:07:43,572 - mmcls - INFO - Epoch [14][200/391]	lr: 3.422e-05, eta: 0:03:51, time: 0.109, data_time: 0.000, memory: 1945, loss: 1.2977, grad_norm: 3.3627
+2023-02-05 16:07:54,413 - mmcls - INFO - Epoch [14][300/391]	lr: 3.422e-05, eta: 0:03:43, time: 0.108, data_time: 0.000, memory: 1945, loss: 1.3164, grad_norm: 3.4852
+2023-02-05 16:08:04,478 - mmcls - INFO - Saving checkpoint at 14 epochs
+2023-02-05 16:08:07,395 - mmcls - INFO - Epoch(val) [14][79]	accuracy_top-1: 91.8100, accuracy_top-5: 99.7800
+2023-02-05 16:08:20,269 - mmcls - INFO - Epoch [15][100/391]	lr: 2.586e-05, eta: 0:03:23, time: 0.129, data_time: 0.021, memory: 1945, loss: 1.2976, grad_norm: 3.4219
+2023-02-05 16:08:31,122 - mmcls - INFO - Epoch [15][200/391]	lr: 2.586e-05, eta: 0:03:15, time: 0.109, data_time: 0.000, memory: 1945, loss: 1.2875, grad_norm: 3.3809
+2023-02-05 16:08:41,972 - mmcls - INFO - Epoch [15][300/391]	lr: 2.586e-05, eta: 0:03:07, time: 0.108, data_time: 0.000, memory: 1945, loss: 1.3528, grad_norm: 3.3553
+2023-02-05 16:08:51,951 - mmcls - INFO - Saving checkpoint at 15 epochs
+2023-02-05 16:08:54,822 - mmcls - INFO - Epoch(val) [15][79]	accuracy_top-1: 91.9000, accuracy_top-5: 99.7200
+2023-02-05 16:09:07,718 - mmcls - INFO - Epoch [16][100/391]	lr: 1.841e-05, eta: 0:02:48, time: 0.129, data_time: 0.021, memory: 1945, loss: 1.2668, grad_norm: 3.3909
+2023-02-05 16:09:18,539 - mmcls - INFO - Epoch [16][200/391]	lr: 1.841e-05, eta: 0:02:39, time: 0.108, data_time: 0.000, memory: 1945, loss: 1.2913, grad_norm: 3.4203
+2023-02-05 16:09:29,381 - mmcls - INFO - Epoch [16][300/391]	lr: 1.841e-05, eta: 0:02:30, time: 0.108, data_time: 0.000, memory: 1945, loss: 1.2980, grad_norm: 3.5447
+2023-02-05 16:09:39,211 - mmcls - INFO - Saving checkpoint at 16 epochs
+2023-02-05 16:09:42,246 - mmcls - INFO - Epoch(val) [16][79]	accuracy_top-1: 91.7700, accuracy_top-5: 99.7300
+2023-02-05 16:09:55,089 - mmcls - INFO - Epoch [17][100/391]	lr: 1.205e-05, eta: 0:02:12, time: 0.128, data_time: 0.021, memory: 1945, loss: 1.3202, grad_norm: 3.4435
+2023-02-05 16:10:05,927 - mmcls - INFO - Epoch [17][200/391]	lr: 1.205e-05, eta: 0:02:03, time: 0.108, data_time: 0.000, memory: 1945, loss: 1.2608, grad_norm: 3.4516
+2023-02-05 16:10:16,770 - mmcls - INFO - Epoch [17][300/391]	lr: 1.205e-05, eta: 0:01:55, time: 0.108, data_time: 0.000, memory: 1945, loss: 1.2278, grad_norm: 3.3503
+2023-02-05 16:10:26,738 - mmcls - INFO - Saving checkpoint at 17 epochs
+2023-02-05 16:10:29,969 - mmcls - INFO - Epoch(val) [17][79]	accuracy_top-1: 92.1000, accuracy_top-5: 99.7700
+2023-02-05 16:10:42,849 - mmcls - INFO - Epoch [18][100/391]	lr: 6.930e-06, eta: 0:01:36, time: 0.129, data_time: 0.021, memory: 1945, loss: 1.2145, grad_norm: 3.3296
+2023-02-05 16:10:53,688 - mmcls - INFO - Epoch [18][200/391]	lr: 6.930e-06, eta: 0:01:28, time: 0.108, data_time: 0.001, memory: 1945, loss: 1.2703, grad_norm: 3.4201
+2023-02-05 16:11:04,543 - mmcls - INFO - Epoch [18][300/391]	lr: 6.930e-06, eta: 0:01:19, time: 0.109, data_time: 0.001, memory: 1945, loss: 1.2775, grad_norm: 3.4771
+2023-02-05 16:11:14,388 - mmcls - INFO - Saving checkpoint at 18 epochs
+2023-02-05 16:11:17,315 - mmcls - INFO - Epoch(val) [18][79]	accuracy_top-1: 92.2100, accuracy_top-5: 99.7400
+2023-02-05 16:11:30,304 - mmcls - INFO - Epoch [19][100/391]	lr: 3.181e-06, eta: 0:01:01, time: 0.130, data_time: 0.021, memory: 1945, loss: 1.3254, grad_norm: 3.2944
+2023-02-05 16:11:41,250 - mmcls - INFO - Epoch [19][200/391]	lr: 3.181e-06, eta: 0:00:52, time: 0.109, data_time: 0.000, memory: 1945, loss: 1.2434, grad_norm: 3.3354
+2023-02-05 16:11:52,225 - mmcls - INFO - Epoch [19][300/391]	lr: 3.181e-06, eta: 0:00:43, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.2964, grad_norm: 3.4356
+2023-02-05 16:12:02,213 - mmcls - INFO - Saving checkpoint at 19 epochs
+2023-02-05 16:12:05,092 - mmcls - INFO - Epoch(val) [19][79]	accuracy_top-1: 92.1700, accuracy_top-5: 99.7400
+2023-02-05 16:12:18,005 - mmcls - INFO - Epoch [20][100/391]	lr: 8.937e-07, eta: 0:00:26, time: 0.129, data_time: 0.021, memory: 1945, loss: 1.2973, grad_norm: 3.3681
+2023-02-05 16:12:28,856 - mmcls - INFO - Epoch [20][200/391]	lr: 8.937e-07, eta: 0:00:17, time: 0.109, data_time: 0.000, memory: 1945, loss: 1.2829, grad_norm: 3.4186
+2023-02-05 16:12:39,872 - mmcls - INFO - Epoch [20][300/391]	lr: 8.937e-07, eta: 0:00:08, time: 0.110, data_time: 0.000, memory: 1945, loss: 1.2705, grad_norm: 3.4261
+2023-02-05 16:12:49,894 - mmcls - INFO - Saving checkpoint at 20 epochs
+2023-02-05 16:12:52,903 - mmcls - INFO - Epoch(val) [20][79]	accuracy_top-1: 92.1100, accuracy_top-5: 99.7500
